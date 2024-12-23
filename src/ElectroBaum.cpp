@@ -19,10 +19,22 @@
 
 #define ROW_COUNT 8
 #define COLUMN_COUNT 6
+#define LED_COUNT 24
+
+int expanderLEDMaxCount = ROW_COUNT * 2;
+
+enum LEDColor
+{
+  RED,
+  GREEN,
+  BLUE,
+  BLACK
+};
 
 void setPinState(int row, int column, bool state);
 byte I2CSetup();
 int scanAddresses(bool *addressList);
+void setLEDToColor(int ledPosition, LEDColor color);
 
 int iDeviceAddress = 0x20;
 bool pinStates[COLUMN_COUNT][ROW_COUNT];
@@ -134,20 +146,39 @@ void loop()
       // }
     }
 
-    io_exp.writePin(0, 0, HIGH);
-    Log.info("Red");
-    delay(250);
-    io_exp.writePin(0, 0, LOW);
-    io_exp.writePin(1, 0, HIGH);
-    Log.info("Green");
-    delay(250);
-    io_exp.writePin(1, 0, LOW);
-    io_exp.writePin(2, 0, HIGH);
-    Log.info("Blue");
-    delay(250);
-    io_exp.writePin(2, 0, LOW);
-    delay(500);
-    Log.info(".");
+    // for (int row = 0; row < ROW_COUNT; row++)
+    // for (int row = 0; row < 2; row++)
+    // {
+    //   for (int column = 0; column < COLUMN_COUNT; column++)
+    //   {
+    //     Log.info("Setting pin states: [ row: %d, column: %d ]", row, column);
+    //     io_exp.writePin(column, row, HIGH);
+    //     Log.info("Red----------------");
+    //     setLEDToColor
+    //     delay(250);
+    //     io_exp.writePin(column, row, LOW);
+    //     ++column;
+    //     Log.info("Setting pin states: [ row: %d, column: %d ]", row, column);
+    //     io_exp.writePin(column, row, HIGH);
+    //     Log.info("Green----------------");
+    //     delay(250);
+    //     io_exp.writePin(column, row, LOW);
+    //     ++column;
+    //     Log.info("Setting pin states: [ row: %d, column: %d ]", row, column);
+    //     io_exp.writePin(column, row, HIGH);
+    //     Log.info("Blue----------------");
+    //     delay(250);
+    //     io_exp.writePin(column, row, LOW);
+    //     delay(500);
+    //     Log.info(".");
+    //   }
+    // }
+    // for(int i = 0; i < LED_COUNT; i++) {
+    for(int i = 0; i < 4; i++) {
+      setLEDToColor(i, RED);
+      setLEDToColor(i, GREEN);
+      setLEDToColor(i, BLUE);
+    }
 
     io_exp.writeAll(allOff);
     // setPinState(0, 1, !pinStates[0][0]);
@@ -268,4 +299,36 @@ int scanAddresses(bool *addressList)
   }
   // delay(5000); // wait 5 seconds for next scan
   return nDevices;
+}
+
+void setLEDToColor(int ledPosition, LEDColor color) {
+  int row = ledPosition / 2;
+  int column = (ledPosition % 2) * 3;
+  int colorIndex = 0;
+
+  switch (color) {
+    case RED:
+      colorIndex = 0;
+      break;
+    case GREEN:
+      colorIndex = 1;
+      break;
+    case BLUE:
+      colorIndex = 2;
+      break;
+  }
+
+  column = column + colorIndex;
+
+  if (ledPosition > expanderLEDMaxCount)
+  {
+    //usee the 2nd board for LEDs past the first 16
+    // skip out for the momement till I set that up
+    return;
+  } else {
+    io_exp.writePin(column, row, HIGH);
+    delay(250);
+    io_exp.writePin(column, row, LOW);
+    delay(250);
+  }
 }
